@@ -9,20 +9,25 @@ public class MapGenerator : MonoBehaviour
 {
     private static MapGenerator instance;
 
+    [Header("Map Data")]
     [SerializeField] private int width;
     [SerializeField] private int height;
 
-    [SerializeField] private string seed;
+    [SerializeField] private double seed;
     [SerializeField] private bool useRandomSeed;
 
+    [Header("Generating Value")]
     [Range(0, 100)]
     [SerializeField] private int randomFillPercent;
     [SerializeField] private int smoothNum;
 
     private Tile[,] map;
 
+    [Header("TileMaps")]
     [SerializeField] private Tilemap wallTilemap;
     [SerializeField] private Tilemap roadTilemap;
+
+    [Header("Tiles")]
     [SerializeField] private TileBase wallTile;
     [SerializeField] private TileBase roadTile;
     [SerializeField] private TileBase warpTile;
@@ -61,6 +66,7 @@ public class MapGenerator : MonoBehaviour
         }
     }
 
+    #region MapGenerator
     public void GenerateMap()
     {
         map = new Tile[width, height];
@@ -83,7 +89,7 @@ public class MapGenerator : MonoBehaviour
     private void MapRandomFill() //맵을 비율에 따라 벽 혹은 빈 공간으로 랜덤하게 채우는 메소드
     {
         if (useRandomSeed)
-            seed = Time.time.ToString(); //시드
+            seed = Time.time; //시드
 
         System.Random pseudoRandom = new System.Random(seed.GetHashCode()); //시드로 부터 의사 난수 생성
 
@@ -184,4 +190,5 @@ public class MapGenerator : MonoBehaviour
         else
             roadTilemap.SetTile(pos, roadTile);
     }
+    #endregion
 }
