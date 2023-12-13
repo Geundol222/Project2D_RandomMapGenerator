@@ -524,8 +524,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 100
   height: 100
-  seed: 0
-  useRandomSeed: 1
+  seed: 35.2653
+  useRandomSeed: 0
   randomFillPercent: 50
   smoothNum: 10
   wallTilemap: {fileID: 6260265887534007675}
