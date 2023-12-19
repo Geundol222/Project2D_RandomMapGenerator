@@ -88,9 +88,9 @@ public class MapGenerator : MonoBehaviour
 
         for (int i = 0; i < smoothNum; i++)
             SmoothMap();
-
+        
         ProcessMap();
-
+        
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -98,7 +98,7 @@ public class MapGenerator : MonoBehaviour
                 OnDrawTile(x, y); //타일 생성
             }
         }
-
+        
         RandomSpawnAndWarpPoint();
     }
 
@@ -108,6 +108,7 @@ public class MapGenerator : MonoBehaviour
     }
 
     #region MapGenerator
+
     /// <summary>
     /// 맵을 비율에 따라 벽 혹은 빈 공간으로 랜덤하게 채움
     /// </summary>
@@ -138,36 +139,36 @@ public class MapGenerator : MonoBehaviour
         bool findWarp = false;
         int xRandom = 0;
         int yRandom = 0;
-
+    
         while (map[xRandom, yRandom] != Tile.Room) // Map의 선택된 랜덤타일이 Room 타일일때까지 반복
         {
             xRandom = (int)UnityEngine.Random.Range(width * 0.1f, width - (width * 0.1f));
             yRandom = (int)UnityEngine.Random.Range(height * 0.1f, height - (height * 0.1f));
         }
-
+    
         map[xRandom, yRandom] = Tile.Spawn;
-
+    
         Vector3Int spawnPos = new Vector3Int(-width / 2 + xRandom, -height / 2 + yRandom, 0);
         roadTilemap.SetTile(spawnPos, spawnTile);
-
+    
         for (int x = width / 10; x < width - (width / 10); x++)
         {
             for ( int y = height / 10; y < height - (height / 10); y++)
             {
                 float distance = Mathf.Pow(xRandom - x, 2) + Mathf.Pow(yRandom - y, 2);
-
+    
                 if (map[x, y] == Tile.Room && distance == Mathf.Pow((width >= height) ? width * 0.55f : height * 0.55f, 2))
                 {
                     findWarp = true;
                     map[x, y] = Tile.Warp;
-
+    
                     Vector3Int warpPos = new Vector3Int(-width / 2 + x, -height / 2 + y, 0);
                     roadTilemap.SetTile(warpPos, warpTile);
-
+    
                     break;
                 }
             }
-
+    
             if (findWarp)
                 break;
         }
@@ -184,9 +185,9 @@ public class MapGenerator : MonoBehaviour
             {
                 int neighbourWallTiles = GetSurroundingWallCount(x, y);
                 if (neighbourWallTiles > 4)
-                    map[x, y] = Tile.Wall; //주변 칸 중 벽이 4칸을 초과할 경우 현재 타일을 벽으로 바꿈
+                    map[x, y] = Tile.Wall; //주변 칸 중 벽이 4칸을 초과할 경우 현재 타일을 Wall로 바꿈
                 else if (neighbourWallTiles < 4) 
-                    map[x, y] = Tile.Room; //주변 칸 중 벽이 4칸 미만일 경우 현재 타일을 빈 공간으로 바꿈
+                    map[x, y] = Tile.Room; //주변 칸 중 벽이 4칸 미만일 경우 현재 타일을 Room으로 바꿈
             }
         }
     }
@@ -285,7 +286,7 @@ public class MapGenerator : MonoBehaviour
     /// Map에서 Region들을 찾아내어 반환
     /// </summary>
     /// <param name="tileType"></param>
-    /// <returns>Double List of Regions</returns>
+    /// <returns>Double List Coordinate of Regions</returns>
     private List<List<Coord>> GetRegions(Tile tileType)
     {
         List<List<Coord>> regions = new List<List<Coord>>(); // 찾아낸 Region들을 저장할 이차원 리스트 선언
@@ -384,7 +385,7 @@ public class MapGenerator : MonoBehaviour
                 {
                     for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++)
                     {
-                        // tile의 상하좌우를 확인하여 만약 해당타일이 Wall Tile이라면 가장자리로 판단하고 edgeTiles에 저장
+                        // tile의 상하좌우타일이 Wall Tile이라면 가장자리로 판단하고 edgeTiles에 저장
                         if (x == tile.tileX || y == tile.tileY)
                         {
                             if (map[x, y] == Tile.Wall)
@@ -426,6 +427,11 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
+        /// <summary>
+        /// 각 Room의 roomSize를 비교하여 반환
+        /// </summary>
+        /// <param name="otherRoom"></param>
+        /// <returns>RoomSize of Compare to otherRoom</returns>
         public int CompareTo(Room otherRoom)
         {
             return otherRoom.roomSize.CompareTo(roomSize);
@@ -443,10 +449,10 @@ public class MapGenerator : MonoBehaviour
     }
 
     /// <summary>
-    /// 닫혀있는 방들을 연결
+    /// 닫혀있는(서로 독립된) 방들을 연결
     /// </summary>
     /// <param name="allRooms"></param>
-    /// <param name="forceAccessibilityFromMainRoom"> MainRoom에서 강제로 Accessible하도록 할것인지 </param>
+    /// <param name="forceAccessibilityFromMainRoom"> 해당 Room을 Main Room에 강제로 접근할 수 있게 할것인지 </param>
     private void ConnectClosesRooms(List<Room> allRooms, bool forceAccessibilityFromMainRoom = false)
     {
         List<Room> roomListA = new List<Room>();
