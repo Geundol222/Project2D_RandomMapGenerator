@@ -136,41 +136,83 @@ public class MapGenerator : MonoBehaviour
     /// </summary>
     private void RandomSpawnAndWarpPoint()
     {
-        bool findWarp = false;
-        int xRandom = 0;
-        int yRandom = 0;
-    
-        while (map[xRandom, yRandom] != Tile.Room) // Map의 선택된 랜덤타일이 Room 타일일때까지 반복
+        List<Coord> roomTileList = new List<Coord>();
+        bool[,] rooms = new bool[width, height];
+
+        Coord firstTile = new Coord(0, 0);
+        bool findFirstTile = false;
+
+        for (int i = 0; i < width; i++)
         {
-            xRandom = (int)UnityEngine.Random.Range(width * 0.1f, width - (width * 0.1f));
-            yRandom = (int)UnityEngine.Random.Range(height * 0.1f, height - (height * 0.1f));
-        }
-    
-        map[xRandom, yRandom] = Tile.Spawn;
-    
-        Vector3Int spawnPos = new Vector3Int(-width / 2 + xRandom, -height / 2 + yRandom, 0);
-        roadTilemap.SetTile(spawnPos, spawnTile);
-    
-        for (int x = width / 10; x < width - (width / 10); x++)
-        {
-            for ( int y = height / 10; y < height - (height / 10); y++)
+            for (int j = 0; j < height; j++)
             {
-                float distance = Mathf.Pow(xRandom - x, 2) + Mathf.Pow(yRandom - y, 2);
-    
-                if (map[x, y] == Tile.Room && distance == Mathf.Pow((width >= height) ? width * 0.55f : height * 0.55f, 2))
+                if (map[i, j] == Tile.Room)
                 {
-                    findWarp = true;
-                    map[x, y] = Tile.Warp;
-    
-                    Vector3Int warpPos = new Vector3Int(-width / 2 + x, -height / 2 + y, 0);
-                    roadTilemap.SetTile(warpPos, warpTile);
-    
+                    rooms[i, j] = true;
+                    findFirstTile = true;
+                    firstTile.tileX = i;
+                    firstTile.tileY = j;
                     break;
                 }
             }
-    
-            if (findWarp)
+
+            if (findFirstTile)
                 break;
+        }
+
+        Queue<Coord> queue = new Queue<Coord>();
+        queue.Enqueue(firstTile);
+    
+        while (queue.Count > 0) 
+        {
+            Coord tile = queue.Dequeue();
+            roomTileList.Add(tile);
+
+            for (int x = tile.tileX - 1; x <= tile.tileX + 1; x++)
+            {
+                for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++)
+                {
+                    // 상하좌우 칸을 확인하여 rooms가 false이고 tileType이 Room이면 rooms를 true로 바꾸고 큐에 해당 좌표를 삽입
+                    if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
+                    {
+                        if (!rooms[x, y] && map[x, y] == Tile.Room)
+                        {
+                            rooms[x, y] = true;
+                            queue.Enqueue(new Coord(x, y));
+                        }
+                    }
+                }
+            }
+        }
+
+        int randomIndex = (int)UnityEngine.Random.Range(0, roomTileList.Count - 1);
+
+        int xRandom = roomTileList[randomIndex].tileX;
+        int yRandom = roomTileList[randomIndex].tileY;
+
+        map[xRandom, yRandom] = Tile.Spawn;
+    
+        Vector3Int spawnPos = new Vector3Int((int)(-width * 0.5f) + xRandom, (int)(-height * 0.5f) + yRandom, 0);
+        roadTilemap.SetTile(spawnPos, spawnTile);
+
+        for (int i = 0; i < roomTileList.Count; i++)
+        {
+            int randomWarp = (int)UnityEngine.Random.Range(0, roomTileList.Count - 1);
+
+            int x = roomTileList[randomWarp].tileX;
+            int y = roomTileList[randomWarp].tileY;
+
+            float distance = Mathf.Pow(xRandom - x, 2) + Mathf.Pow(yRandom - y, 2);
+
+            if (distance >= Mathf.Pow((width >= height) ? width * 0.55f : height * 0.55f, 2))
+            {
+                map[x, y] = Tile.Warp;
+
+                Vector3Int warpPos = new Vector3Int(-width / 2 + x, -height / 2 + y, 0);
+                roadTilemap.SetTile(warpPos, warpTile);
+
+                break;
+            }
         }
     }
 
@@ -262,7 +304,7 @@ public class MapGenerator : MonoBehaviour
 
         foreach (List<Coord> roomRegion in roomRegions)
         {
-            if (roomRegion.Count < roomTresholdSize) // 만약 roomREgion이 최소값을 넘기지 못하면 Wall Tile로 교체
+            if (roomRegion.Count < roomTresholdSize) // 만약 roomRegion이 최소값을 넘기지 못하면 Wall Tile로 교체
             {
                 foreach (Coord tile in roomRegion)
                 {
@@ -275,8 +317,8 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        // survivingRooms에 있는 방을 전부 이어줌
-        survivingRooms.Sort();
+        // survivingRooms에 있는 첫번째 방을 MainRoom으로 하여 방을 전부 이어줌
+        survivingRooms.Sort(); // 가장 큰 방이 Main Room
         survivingRooms[0].isMainRoom = true;
         survivingRooms[0].isAccessibleFromMainRoom = true;
         ConnectClosesRooms(survivingRooms);
@@ -290,13 +332,13 @@ public class MapGenerator : MonoBehaviour
     private List<List<Coord>> GetRegions(Tile tileType)
     {
         List<List<Coord>> regions = new List<List<Coord>>(); // 찾아낸 Region들을 저장할 이차원 리스트 선언
-        int[,] mapFlags = new int[width, height]; // Region을 판정할 이차원배열 mapFlags선언, Region에 해당하면 1, 아니면 0
+        bool[,] mapFlags = new bool[width, height]; // Region을 판정할 이차원배열 mapFlags선언, Region에 해당하면 true, 아니면 false
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if (mapFlags[x, y] == 0 && map[x, y] == tileType) // 만약 현재 좌표의 mapFlags가 0이고, tileType이 매개변수와 같을 경우 
+                if (!mapFlags[x, y] && map[x, y] == tileType) // 만약 현재 좌표의 mapFlags가 0이고, tileType이 매개변수와 같을 경우 
                 {
                     // tileType에 해당하는 Tile들을 받아와서 regions에 저장한 후 mapFlags 배열에서 newRegion에 해당하는 좌표들을 1로 변경
                     List<Coord> newRegion = GetRegionTiles(x, y);
@@ -304,7 +346,7 @@ public class MapGenerator : MonoBehaviour
 
                     foreach (Coord tile in newRegion)
                     {
-                        mapFlags[tile.tileX, tile.tileY] = 1;
+                        mapFlags[tile.tileX, tile.tileY] = true;
                     }
                 }
             }
@@ -322,13 +364,13 @@ public class MapGenerator : MonoBehaviour
     private List<Coord> GetRegionTiles(int startX, int startY)
     {
         List<Coord> tiles = new List<Coord>(); // Region으로 설정할 수 있는 Tile들을 저장할 리스트 선언
-        int[,] mapFlags = new int[width, height];
+        bool[,] mapFlags = new bool[width, height];
         Tile tileType = map[startX, startY];
 
         // BFS
         Queue<Coord> queue = new Queue<Coord>();
         queue.Enqueue(new Coord(startX, startY));
-        mapFlags[startX, startY] = 1;
+        mapFlags[startX, startY] = true;
 
         while (queue.Count > 0)
         {
@@ -342,9 +384,9 @@ public class MapGenerator : MonoBehaviour
                     // startX, startY부터 상하좌우 칸을 확인하여 mapFlags가 0이고 tileType이 같으면 mapFlags를 1로 바꾸고 큐에 해당 좌표를 삽입
                     if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
                     {
-                        if (mapFlags[x, y] == 0 && map[x, y] == tileType)
+                        if (!mapFlags[x, y] && map[x, y] == tileType)
                         {
-                            mapFlags[x, y] = 1;
+                            mapFlags[x, y] = true;
                             queue.Enqueue(new Coord(x, y));
                         }
                     }
@@ -602,7 +644,7 @@ public class MapGenerator : MonoBehaviour
         int dy = to.tileY - from.tileY;
 
         bool inverted = false;
-        int step = Math.Sign(dx);
+        int step = Math.Sign(dx); // 양수일 경우 1, 음수일경우 -1
         int gradientStep = Math.Sign(dy);
 
         int longest = Mathf.Abs(dx);
