@@ -185,35 +185,41 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
-        int randomIndex = (int)UnityEngine.Random.Range(0, roomTileList.Count - 1);
+        int randomSpawnIndex = (int)UnityEngine.Random.Range(0, roomTileList.Count - 1);
 
-        int xRandom = roomTileList[randomIndex].tileX;
-        int yRandom = roomTileList[randomIndex].tileY;
+        int xSpawnRandom = roomTileList[randomSpawnIndex].tileX;
+        int ySpawnRandom = roomTileList[randomSpawnIndex].tileY;
 
-        map[xRandom, yRandom] = Tile.Spawn;
+        map[xSpawnRandom, ySpawnRandom] = Tile.Spawn;
     
-        Vector3Int spawnPos = new Vector3Int((int)(-width * 0.5f) + xRandom, (int)(-height * 0.5f) + yRandom, 0);
+        Vector3Int spawnPos = new Vector3Int((int)(-width * 0.5f) + xSpawnRandom, (int)(-height * 0.5f) + ySpawnRandom, 0);
         roadTilemap.SetTile(spawnPos, spawnTile);
 
+        List<Coord> warpTileList = new List<Coord>();
+        int radius = (int)((width >= height) ? width * 0.55f : height * 0.55f);
+
         for (int i = 0; i < roomTileList.Count; i++)
-        {
-            int randomWarp = (int)UnityEngine.Random.Range(0, roomTileList.Count - 1);
+        {        
+            int x = roomTileList[i].tileX;
+            int y = roomTileList[i].tileY;
 
-            int x = roomTileList[randomWarp].tileX;
-            int y = roomTileList[randomWarp].tileY;
+            float distance = Mathf.Pow(xSpawnRandom - x, 2) + Mathf.Pow(ySpawnRandom - y, 2);
 
-            float distance = Mathf.Pow(xRandom - x, 2) + Mathf.Pow(yRandom - y, 2);
-
-            if (distance >= Mathf.Pow((width >= height) ? width * 0.55f : height * 0.55f, 2))
+            if (distance >= Mathf.Pow(radius, 2))
             {
-                map[x, y] = Tile.Warp;
-
-                Vector3Int warpPos = new Vector3Int(-width / 2 + x, -height / 2 + y, 0);
-                roadTilemap.SetTile(warpPos, warpTile);
-
-                break;
+               warpTileList.Add(new Coord(x, y));
             }
         }
+
+        int randomWarpIndex = (int)UnityEngine.Random.Range(0, warpTileList.Count - 1);
+
+        int xWarpRandom = warpTileList[randomWarpIndex].tileX;
+        int yWarpRandom = warpTileList[randomWarpIndex].tileY;
+
+        map[xWarpRandom, yWarpRandom] = Tile.Warp;
+
+        Vector3Int warpPos = new Vector3Int((int)(-width * 0.5f) + xWarpRandom, (int)(-height * 0.5f) + yWarpRandom, 0);
+        roadTilemap.SetTile(warpPos, warpTile);
     }
 
     /// <summary>
