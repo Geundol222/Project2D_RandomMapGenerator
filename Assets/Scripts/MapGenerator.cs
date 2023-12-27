@@ -142,6 +142,7 @@ public class MapGenerator : MonoBehaviour
         Coord firstTile = new Coord(0, 0);
         bool findFirstTile = false;
 
+        // 맨 처음으로 탐색할 Tile 설정
         for (int i = 0; i < width; i++)
         {
             for (int j = 0; j < height; j++)
@@ -160,9 +161,11 @@ public class MapGenerator : MonoBehaviour
                 break;
         }
 
+        // BFS
         Queue<Coord> queue = new Queue<Coord>();
         queue.Enqueue(firstTile);
-    
+        
+        // Room Tile로 설정된 Tile들 리스트에 ㅈ저장
         while (queue.Count > 0) 
         {
             Coord tile = queue.Dequeue();
@@ -198,6 +201,7 @@ public class MapGenerator : MonoBehaviour
         List<Coord> warpTileList = new List<Coord>();
         int radius = (int)((width >= height) ? width * 0.55f : height * 0.55f);
 
+        // Spawn Tile을 기준으로 Radius와 같거나 멀리있는 Tile들을 리스트에 저장
         for (int i = 0; i < roomTileList.Count; i++)
         {        
             int x = roomTileList[i].tileX;
