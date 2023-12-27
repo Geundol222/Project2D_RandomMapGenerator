@@ -348,9 +348,9 @@ public class MapGenerator : MonoBehaviour
         {
             for (int y = 0; y < height; y++)
             {
-                if (!mapFlags[x, y] && map[x, y] == tileType) // 만약 현재 좌표의 mapFlags가 0이고, tileType이 매개변수와 같을 경우 
+                if (!mapFlags[x, y] && map[x, y] == tileType) // 만약 현재 좌표의 mapFlags가 false이고, tileType이 매개변수와 같을 경우 
                 {
-                    // tileType에 해당하는 Tile들을 받아와서 regions에 저장한 후 mapFlags 배열에서 newRegion에 해당하는 좌표들을 1로 변경
+                    // tileType에 해당하는 Tile들을 받아와서 regions에 저장한 후 mapFlags 배열에서 newRegion에 해당하는 좌표들을 true로 변경
                     List<Coord> newRegion = GetRegionTiles(x, y);
                     regions.Add(newRegion);
 
@@ -391,7 +391,7 @@ public class MapGenerator : MonoBehaviour
             {
                 for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++)
                 {
-                    // startX, startY부터 상하좌우 칸을 확인하여 mapFlags가 0이고 tileType이 같으면 mapFlags를 1로 바꾸고 큐에 해당 좌표를 삽입
+                    // startX, startY부터 상하좌우 칸을 확인하여 mapFlags가 false이고 tileType이 같으면 mapFlags를 true로 바꾸고 큐에 해당 좌표를 삽입
                     if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
                     {
                         if (!mapFlags[x, y] && map[x, y] == tileType)
