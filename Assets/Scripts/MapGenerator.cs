@@ -342,21 +342,21 @@ public class MapGenerator : MonoBehaviour
     private List<List<Coord>> GetRegions(Tile tileType)
     {
         List<List<Coord>> regions = new List<List<Coord>>(); // 찾아낸 Region들을 저장할 이차원 리스트 선언
-        bool[,] mapFlags = new bool[width, height]; // Region을 판정할 이차원배열 mapFlags선언, Region에 해당하면 true, 아니면 false
+        bool[,] visitTiles = new bool[width, height]; // Region을 판정할 이차원배열 visitTiles선언, Region에 해당하면 true, 아니면 false
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if (!mapFlags[x, y] && map[x, y] == tileType) // 만약 현재 좌표의 mapFlags가 false이고, tileType이 매개변수와 같을 경우 
+                if (!visitTiles[x, y] && map[x, y] == tileType) // 만약 현재 좌표의 visitTiles가 false이고, tileType이 매개변수와 같을 경우 
                 {
-                    // tileType에 해당하는 Tile들을 받아와서 regions에 저장한 후 mapFlags 배열에서 newRegion에 해당하는 좌표들을 true로 변경
+                    // tileType에 해당하는 Tile들을 받아와서 regions에 저장한 후 visitTiles 배열에서 newRegion에 해당하는 좌표들을 true로 변경
                     List<Coord> newRegion = GetRegionTiles(x, y);
                     regions.Add(newRegion);
 
                     foreach (Coord tile in newRegion)
                     {
-                        mapFlags[tile.tileX, tile.tileY] = true;
+                        visitTiles[tile.tileX, tile.tileY] = true;
                     }
                 }
             }
@@ -374,13 +374,13 @@ public class MapGenerator : MonoBehaviour
     private List<Coord> GetRegionTiles(int startX, int startY)
     {
         List<Coord> tiles = new List<Coord>(); // Region으로 설정할 수 있는 Tile들을 저장할 리스트 선언
-        bool[,] mapFlags = new bool[width, height];
+        bool[,] visitTiles = new bool[width, height];
         Tile tileType = map[startX, startY];
 
         // BFS
         Queue<Coord> queue = new Queue<Coord>();
         queue.Enqueue(new Coord(startX, startY));
-        mapFlags[startX, startY] = true;
+        visitTiles[startX, startY] = true;
 
         while (queue.Count > 0)
         {
@@ -391,12 +391,12 @@ public class MapGenerator : MonoBehaviour
             {
                 for (int y = tile.tileY - 1; y <= tile.tileY + 1; y++)
                 {
-                    // startX, startY부터 상하좌우 칸을 확인하여 mapFlags가 false이고 tileType이 같으면 mapFlags를 true로 바꾸고 큐에 해당 좌표를 삽입
+                    // startX, startY부터 상하좌우 칸을 확인하여 visitTiles가 false이고 tileType이 같으면 visitTiles를 true로 바꾸고 큐에 해당 좌표를 삽입
                     if (IsInMapRange(x, y) && (y == tile.tileY || x == tile.tileX))
                     {
-                        if (!mapFlags[x, y] && map[x, y] == tileType)
+                        if (!visitTiles[x, y] && map[x, y] == tileType)
                         {
-                            mapFlags[x, y] = true;
+                            visitTiles[x, y] = true;
                             queue.Enqueue(new Coord(x, y));
                         }
                     }
